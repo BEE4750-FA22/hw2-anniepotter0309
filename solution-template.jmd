@@ -127,11 +127,12 @@ end
 
 # print minimum treatment necessary
 let i = 1
-  while C_treat[i] < 4
+  while C_t[i] < 4
       i += 1
+      println(e[i])
+  println(C_t[i])
   end
-  println(e[i])
-  println(C_treat[i])
+  
 end
 ```
 The minimum treatment level for waste stream 2 that will ensure the dissolved 
