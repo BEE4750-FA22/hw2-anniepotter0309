@@ -107,32 +107,42 @@ function treated_conc(e, N_0, B_0, C_0)
   return c_new, b_new, n_new
 end
 
-e = range(0, 1, length = 101);
-C_t = ones(101) * 100;
+e = range(0, 1, 101)
+C_t = ones(101) * 100
+
+# find concentrations in river just before addition of source 2
+c_riv, b_riv, n_riv = do_calc(k_a, k_c, k_n, 15, U, C_s, c_0, b_0, n_0)
 
 for i in 1:101
-  C_22, B_22, N_22 = treated_conc(e[i], N_02, B_02, C_02)
-  c_2 = ((Q_r+Q_1)*C[16] + Q_2*C_22) / (Q_r+Q_1+Q_2)  
-  b_2 = ((Q_r+Q_1)*B[16] + Q_2*B_22) / (Q_r+Q_1+Q_2)
-  n_2 = ((Q_r+Q_1)*N[16] + Q_2*N_22) / (Q_r+Q_1+Q_2)
+  # concentration in treated source 2
+  c_2, b_2, n_2 = treated_conc(e[i], N_02, B_02, C_02)
 
-  # find minimum DO level for each treatment
-  for dist in 16:51
-    C_tr, B_tr, N_tr = do_calc(k_a, k_c, k_n, dist, U, C_s, c_2, b_2, n_2)
-    if C_tr < C_t[i]
-      C_t[i] = C_tr
+  # find concentration in river after addition
+  c_r2 = ((Q_1+Q_r)*c_riv + Q_2*c_2) / (Q_1+Q_2+Q_r)
+  b_r2 = ((Q_1+Q_r)*b_riv + Q_2*b_2) / (Q_1+Q_2+Q_r)
+  n_r2 = ((Q_1+Q_r)*n_riv + Q_2*n_2) / (Q_1+Q_2+Q_r)
+
+  # find minimum DO after addition of source 2
+  for dist in 1:36
+
+    # concentration in river at addition of source 2
+    C_t2, B_t2, N_t2 = do_calc(k_a, k_c, k_n, dist, U, C_s, c_r2, b_r2, n_r2)
+
+    # update C_t if new min is found for treatment level
+    if C_t2 < C_t[i]
+      println(C_t[i])
+      C_t[i] = C_t2
     end
   end
 end
 
-# print minimum treatment necessary
-let i = 1
-  while C_t[i] < 4
-      i += 1
-      println(e[i])
-  println(C_t[i])
+# find and print minimum treatment that meets standard
+let j = 1
+  while C_t[j] < 4
+    j += 1
   end
-  
+  println(e[j])
+  println(C_t[j])
 end
 ```
 The minimum treatment level for waste stream 2 that will ensure the dissolved 
@@ -143,8 +153,9 @@ oxygen concentration never drops below 4 mg/L is 0.64.
 e = range(0, 1, length = 101);
 C_treat = ones(101) * 100;
 
+# iterate over the treatment efficiencies
 for i in 1:101
-  # initial concentration of source 1, with treatment
+  # initial concentrations of source 1, with treatment
   C_11, B_11, N_11 = treated_conc(e[i], N_01, B_01, C_01)
 
   # concentrations in river after addition of treated source 1
@@ -188,10 +199,7 @@ is 0.08.
 ## Problem 1.5
 
 ## Problem 1.6
-```julia
-cbod = rand(Uniform(4, 7))
-nbod = rand(Uniform(3, 8))
-```
+
 
 ## Problem 1.7
 
