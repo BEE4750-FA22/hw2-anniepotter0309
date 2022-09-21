@@ -146,7 +146,7 @@ let j = 1
 end
 ```
 The minimum treatment level for waste stream 2 that will ensure the dissolved 
-oxygen concentration never drops below 4 mg/L is 0.64.
+oxygen concentration never drops below 4 mg/L is 0.14.
 
 ## Problem 1.4
 ```julia
