@@ -194,23 +194,19 @@ so the standard is not exceeded.
 using Distributions
 using Random
 Random.seed!(1234)
-cbod_1 = zeros(101);
-nbod_1 = zeros(101);
-cbod_2 = zeros(101);
-nbod_2 = zeros(101);
+cbod = zeros(101);
+nbod = zeros(101);
 
 # fill vectors with random inputs
 for i in 1:100
-  cbod_1[i] = rand(Uniform(4, 7));
-  nbod_1[i] = rand(Uniform(3, 8));
-  cbod_2[i] = rand(Uniform(4, 7));
-  nbod_2[i] = rand(Uniform(3, 8));
+  cbod[i] = rand(Uniform(4, 7));
+  nbod[i] = rand(Uniform(3, 8));
 end
 
 C_rand = ones(101) * 100;
 # iterate over the treatment efficiencies
 for i in 1:101
-  C_rand[i] = run_sim(Q_r, Q_1, Q_2, C_0r, C_01, C_02, B_0r, cbod_1[i], cbod_2[i], N_0r, nbod_1[i], nbod_2[i], 0.08, 0.08, k_a, k_c, k_n, U, C_s)
+  C_rand[i] = run_sim(Q_r, Q_1, Q_2, C_0r, C_01, C_02, cbod[i], B_01, B_02, nbod[i], N_01, N_02, 0, 0.14, k_a, k_c, k_n, U, C_s)
 end
 
 # print minimum treatment necessary
@@ -223,7 +219,7 @@ let counter = 0
   println(counter)
 end
 ```
-I keep getting 0% but that does not seem correct.
+Approximately 77% of the samples do not meet the standard.
 
 
 ## Problem 1.7
@@ -246,13 +242,12 @@ end
 ```
 
 ```julia
-samples1 = sample_correlated_uniform(101, [4 7], [3 8]);
-samples2 = sample_correlated_uniform(101, [4 7], [3 8]);
+samples = sample_correlated_uniform(101, [4 7], [3 8]);
 
 C_corr = ones(101) * 100;
 # iterate over the treatment efficiencies
 for i in 1:101
-  C_corr[i] = run_sim(Q_r, Q_1, Q_2, C_0r, C_01, C_02, B_0r, samples1[i, 1], samples2[i, 1], N_0r, samples1[i, 2], samples2[i, 2], 0.08, 0.08, k_a, k_c, k_n, U, C_s)
+  C_corr[i] = run_sim(Q_r, Q_1, Q_2, C_0r, C_01, C_02, samples[i, 1], B_01, B_02, samples[i, 2], N_01, N_02, 0, 0.14, k_a, k_c, k_n, U, C_s)
 end
 
 # print minimum treatment necessary
@@ -265,13 +260,16 @@ let counter = 0
   println(counter)
 end
 ```
-Also getting 0% which also doesn't seem right.
+Approximately 72% of the samples do not meet the standard.
 
 ## Problem 1.8
-Discuss how the presence of uncertainty and dependence between variables might
-affect your decision-making process. Would you stick with the same strategy as in
-Problem 1.5, or find a new strategy? What other information would you need, if any?
-
+Based on the results that include uncertainty in the model, I would definitely recommend 
+treating at an efficiency higher than 8% for each stream. If we increase the treatment to 
+an efficiency of 50%, less than 30% of the samples fail to meet the standard. This same 
+passing percentage can be met by treating both inputs at a 20% efficiency level. If both
+streams are treated at 40% efficiency, none of the samples fail to meet the standard. The
+differences between level of treatment required varies greatly when we are not certain of
+the concentrations. 
 ```
 
 # References
