@@ -269,7 +269,14 @@ an efficiency of 50%, less than 30% of the samples fail to meet the standard. Th
 passing percentage can be met by treating both inputs at a 20% efficiency level. If both
 streams are treated at 40% efficiency, none of the samples fail to meet the standard. The
 differences between level of treatment required varies greatly when we are not certain of
-the concentrations. 
+the concentrations. If we are not certain of the river concentrations, I would more likely 
+recommend treating both streams. Slightly fewer cases fail when both streams are treated at 
+8% efficiency that only the second at 14%.
+In order to make a more accurate recommendation, information could be collected about the 
+rivers flow and concentrations. For example, in a farming community CBOD and NBOD would
+likely fluctuate seasonaly with crops. This information would allow us to prepare for more 
+treatment when necessary, and help decide if treating one stream is good enough most of the
+time.
 ```
 
 # References
