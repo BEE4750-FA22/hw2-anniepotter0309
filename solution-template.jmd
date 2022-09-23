@@ -107,33 +107,44 @@ function treated_conc(e, N_0, B_0, C_0)
   return c_new, b_new, n_new
 end
 
-e = range(0, 1, 101)
-C_t = ones(101) * 100
+function run_sim(Qr, Q1, Q2, cr, c1, c2, br, b1, b2, nr, n1, n2, e1, e2, k_a, k_c, k_n, U, C_s)
+    # initial concentrations of source 1, with treatment
+    C_11, B_11, N_11 = treated_conc(e1, n1, b1, c1)
 
-# find concentrations in river just before addition of source 2
-c_riv, b_riv, n_riv = do_calc(k_a, k_c, k_n, 15, U, C_s, c_0, b_0, n_0)
+    # concentrations in river after addition of treated source 1
+    c_0 = (Qr*cr + Q1*C_11) / (Qr+Q1)  
+    b_0 = (Qr*br + Q1*B_11) / (Qr+Q1)
+    n_0 = (Qr*nr + Q1*N_11) / (Qr+Q1)
+
+    # concentrations of river at input of source 2, treated
+    C_12, B_12, N_12 = do_calc(k_a, k_c, k_n, 15, U, C_s, c_0, b_0, n_0)
+
+    # initial concentration of source 2, with treatment
+    C_22, B_22, N_22 = treated_conc(e2, n2, b2, c2)
+
+    # concentrations of river after addition of treated source 2
+    c_2tr = ((Qr+Q1)*C_12 + Q2*C_22) / (Qr+Q1+Q2) 
+    b_2tr = ((Qr+Q1)*B_12 + Q2*B_22) / (Qr+Q1+Q2)
+    n_2tr = ((Qr+Q1)*N_12 + Q2*N_22) / (Qr+Q1+Q2)
+
+    # set high so can record min
+    C_treat = 100
+
+    # find minimum DO level for each treatment
+    for dist in 1:36
+      C_tr, B_tr, N_tr = do_calc(k_a, k_c, k_n, dist, U, C_s, c_2tr, b_2tr, n_2tr)
+      if C_tr < C_treat
+        C_treat = C_tr
+      end
+    end
+  return C_treat
+end
+
+e = range(0, 1, 101);
+C_t = ones(101) * 100;
 
 for i in 1:101
-  # concentration in treated source 2
-  c_2, b_2, n_2 = treated_conc(e[i], N_02, B_02, C_02)
-
-  # find concentration in river after addition
-  c_r2 = ((Q_1+Q_r)*c_riv + Q_2*c_2) / (Q_1+Q_2+Q_r)
-  b_r2 = ((Q_1+Q_r)*b_riv + Q_2*b_2) / (Q_1+Q_2+Q_r)
-  n_r2 = ((Q_1+Q_r)*n_riv + Q_2*n_2) / (Q_1+Q_2+Q_r)
-
-  # find minimum DO after addition of source 2
-  for dist in 1:36
-
-    # concentration in river at addition of source 2
-    C_t2, B_t2, N_t2 = do_calc(k_a, k_c, k_n, dist, U, C_s, c_r2, b_r2, n_r2)
-
-    # update C_t if new min is found for treatment level
-    if C_t2 < C_t[i]
-      println(C_t[i])
-      C_t[i] = C_t2
-    end
-  end
+  C_t[i] = run_sim(Q_r, Q_1, Q_2, C_0r, C_01, C_02, B_0r, B_01, B_02, N_0r, N_01, N_02, 0, e[i], k_a, k_c, k_n, U, C_s)
 end
 
 # find and print minimum treatment that meets standard
@@ -152,35 +163,9 @@ oxygen concentration never drops below 4 mg/L is 0.14.
 ```julia
 e = range(0, 1, length = 101);
 C_treat = ones(101) * 100;
-
 # iterate over the treatment efficiencies
 for i in 1:101
-  # initial concentrations of source 1, with treatment
-  C_11, B_11, N_11 = treated_conc(e[i], N_01, B_01, C_01)
-
-  # concentrations in river after addition of treated source 1
-  c_0 = (Q_r*C_0r + Q_1*C_11) / (Q_r+Q_1)  
-  b_0 = (Q_r*B_0r + Q_1*B_11) / (Q_r+Q_1)
-  n_0 = (Q_r*N_0r + Q_1*N_11) / (Q_r+Q_1)
-
-  # concentrations of river at input of source 2, treated
-  C_12, B_12, N_12 = do_calc(k_a, k_c, k_n, 15, U, C_s, c_0, b_0, n_0)
-
-  # initial concentration of source 2, with treatment
-  C_22, B_22, N_22 = treated_conc(e[i], N_02, B_02, C_02)
-
-  # concentrations of river after addition of treated source 2
-  c_2tr = ((Q_r+Q_1)*C_12 + Q_2*C_22) / (Q_r+Q_1+Q_2) 
-  b_2tr = ((Q_r+Q_1)*B_12 + Q_2*B_22) / (Q_r+Q_1+Q_2)
-  n_2tr = ((Q_r+Q_1)*N_12 + Q_2*N_22) / (Q_r+Q_1+Q_2)
-
-  # find minimum DO level for each treatment
-  for dist in 1:36
-    C_tr, B_tr, N_tr = do_calc(k_a, k_c, k_n, dist, U, C_s, c_2tr, b_2tr, n_2tr)
-    if C_tr < C_treat[i]
-      C_treat[i] = C_tr
-    end
-  end
+  C_treat[i] = run_sim(Q_r, Q_1, Q_2, C_0r, C_01, C_02, B_0r, B_01, B_02, N_0r, N_01, N_02, e[i], e[i], k_a, k_c, k_n, U, C_s)
 end
 
 # print minimum treatment necessary
@@ -205,6 +190,40 @@ fault that the regulation is exceeded. I think it makes most sense to treat sour
 so the standard is not exceeded.
 
 ## Problem 1.6
+```julia
+using Distributions
+using Random
+Random.seed!(1234)
+cbod_1 = zeros(101);
+nbod_1 = zeros(101);
+cbod_2 = zeros(101);
+nbod_2 = zeros(101);
+
+# fill vectors with random inputs
+for i in 1:100
+  cbod_1[i] = rand(Uniform(4, 7));
+  nbod_1[i] = rand(Uniform(3, 8));
+  cbod_2[i] = rand(Uniform(4, 7));
+  nbod_2[i] = rand(Uniform(3, 8));
+end
+
+C_rand = ones(101) * 100;
+# iterate over the treatment efficiencies
+for i in 1:101
+  C_rand[i] = run_sim(Q_r, Q_1, Q_2, C_0r, C_01, C_02, B_0r, cbod_1[i], cbod_2[i], N_0r, nbod_1[i], nbod_2[i], 0.08, 0.08, k_a, k_c, k_n, U, C_s)
+end
+
+# print minimum treatment necessary
+let counter = 0
+  for i = 1:101
+    if C_rand[i] < 4
+        counter += 1
+    end
+  end
+  println(counter)
+end
+```
+I keep getting 0% but that does not seem correct.
 
 
 ## Problem 1.7
@@ -212,7 +231,6 @@ so the standard is not exceeded.
 ```julia; echo=false
 # This block will not show up in compiled output.
 
-using Distributions
 using PDMats
 
 # This function samples n correlated variates distributed over 
@@ -227,8 +245,34 @@ function sample_correlated_uniform(n, a, b, corr_coef=0.7)
 end
 ```
 
+```julia
+samples1 = sample_correlated_uniform(101, [4 7], [3 8]);
+samples2 = sample_correlated_uniform(101, [4 7], [3 8]);
+
+C_corr = ones(101) * 100;
+# iterate over the treatment efficiencies
+for i in 1:101
+  C_corr[i] = run_sim(Q_r, Q_1, Q_2, C_0r, C_01, C_02, B_0r, samples1[i, 1], samples2[i, 1], N_0r, samples1[i, 2], samples2[i, 2], 0.08, 0.08, k_a, k_c, k_n, U, C_s)
+end
+
+# print minimum treatment necessary
+let counter = 0
+  for i = 1:101
+    if C_corr[i] < 4
+        counter += 1
+    end
+  end
+  println(counter)
+end
+```
+Also getting 0% which also doesn't seem right.
+
 ## Problem 1.8
+Discuss how the presence of uncertainty and dependence between variables might
+affect your decision-making process. Would you stick with the same strategy as in
+Problem 1.5, or find a new strategy? What other information would you need, if any?
 
 ```
 
 # References
+https://discourse.julialang.org/t/how-to-create-a-random-uniform-distribution-between-but-excluding-0-and-10/21908
